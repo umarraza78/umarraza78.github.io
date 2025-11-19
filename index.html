@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Sale Calculator - Assignment 4</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --bg: #f3f4f6;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #1f2937;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            transition: transform 0.2s;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            text-align: center;
+            color: #111827;
+        }
+
+
+        #error-banner {
+            display: none;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group { margin-bottom: 1rem; }
+        
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+
+        .input-error {
+            border-color: var(--danger) !important;
+            background-color: #fef2f2;
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.875rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        button:hover { background-color: #4338ca; transform: translateY(-1px); }
+        button:active { transform: translateY(1px); }
+
+
+        .result-area {
+            margin-top: 1.5rem;
+            text-align: center;
+            padding: 1rem;
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            border: 1px dashed #d1d5db;
+        }
+
+        .result-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #111827;
+            transition: color 0.3s;
+        }
+
+
+        .debug-panel {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-wrapper:hover { background-color: #f3f4f6; }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background-color: #e5e7eb;
+            border-radius: 99px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        input[type="checkbox"] { display: none; }
+        
+        input[type="checkbox"]:checked + .toggle-switch {
+            background-color: var(--danger);
+        }
+
+        input[type="checkbox"]:checked + .toggle-switch::after {
+            transform: translateX(20px);
+        }
+
+  
+        .formula-preview {
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #6b7280;
+            background: #1f2937;
+            color: #10b981; 
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .formula-bad { color: #ef4444; } 
+
+    </style>
+</head>
+<body>
+
+<div class="card" id="main-card">
+    <div id="error-banner">
+        <strong>⚠ CRITICAL ERROR</strong><br>
+        Calculation anomaly detected (BUG: wrong formula)
+    </div>
+
+    <h1>🛒 Smart Sale Calculator </h1>
+
+    <div class="input-group">
+        <label>Original Price ($)</label>
+        <input type="number" id="price" placeholder="e.g. 100" value="100" onkeydown="checkEnter(event)">
+    </div>
+
+    <div class="input-group">
+        <label>Discount (%)</label>
+        <input type="number" id="discount" placeholder="e.g. 20" value="20" onkeydown="checkEnter(event)">
+    </div>
+
+    <button onclick="calculate()">Calculate Price</button>
+
+    <div class="result-area">
+        <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 5px;">FINAL PRICE</div>
+        <div class="result-value" id="result">$---</div>
+    </div>
+
+    <div class="debug-panel">
+        <label class="toggle-wrapper">
+            <div>
+                <div style="font-weight: 600; font-size: 0.9rem;">Simulate Bug</div>
+                <div style="font-size: 0.75rem; color: #6b7280;">Injects formula logic error</div>
+            </div>
+            <input type="checkbox" id="bug-toggle" onchange="updateFormulaPreview()">
+            <div class="toggle-switch"></div>
+        </label>
+
+        <div class="formula-preview" id="formula-text">
+            ƒ: price * (1 - discount)
+        </div>
+    </div>
+</div>
+
+<script>
+
+    updateFormulaPreview();
+
+
+    function checkEnter(event) {
+        if (event.key === "Enter") calculate();
+    }
+
+
+    function updateFormulaPreview() {
+        const isBugged = document.getElementById('bug-toggle').checked;
+        const preview = document.getElementById('formula-text');
+        
+        if (isBugged) {
+            preview.innerHTML = "ƒ: price * (1 <strong style='text-decoration:underline'>+</strong> discount)  // BUG";
+            preview.classList.add('formula-bad');
+        } else {
+            preview.innerHTML = "ƒ: price * (1 - discount)  // OK";
+            preview.classList.remove('formula-bad');
+        }
+    }
+
+    function calculate() {
+        const priceInput = document.getElementById('price');
+        const discountInput = document.getElementById('discount');
+        const resultDisplay = document.getElementById('result');
+        const banner = document.getElementById('error-banner');
+        const card = document.getElementById('main-card');
+        
+        card.classList.remove('shake');
+        banner.style.display = 'none';
+        priceInput.classList.remove('input-error');
+        discountInput.classList.remove('input-error');
+        resultDisplay.style.color = "#111827";
+
+        const price = parseFloat(priceInput.value);
+        const discount = parseFloat(discountInput.value);
+
+        if (isNaN(price) || isNaN(discount)) {
+            alert("Please enter valid numbers.");
+            return;
+        }
+
+        const isBugged = document.getElementById('bug-toggle').checked;
+        const expected = price * (1 - (discount / 100));
+        
+        let actual;
+        if (isBugged) {
+            actual = price * (1 + (discount / 100));
+        } else {
+            actual = expected;
+        }
+
+        resultDisplay.innerText = `$${actual.toFixed(2)}`;
+
+        
+        if (isBugged) {
+       
+            void card.offsetWidth; 
+            card.classList.add('shake');
+
+         
+            priceInput.classList.add('input-error');
+            discountInput.classList.add('input-error');
+            resultDisplay.style.color = "#ef4444";
+            
+           
+            banner.style.display = "block";
+
+           
+            const logData = {
+                timestamp: new Date().toISOString(),
+                function: "calculate",
+                input: { price, discount },
+                result: actual,
+                expected: expected,
+                delta: Math.abs(actual - expected),
+                errorCode: "BUG_WRONG_FORMULA"
+            };
+            console.error("⚠️ SYSTEM FAILURE:", JSON.stringify(logData, null, 2));
+
+        } else {
+            console.log("✅ Calculation success");
+        }
+    }
+</script>
+
+</body>
+</html>
